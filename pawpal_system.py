@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, timedelta
+
 
 class Task:
     """A care activity assigned to a pet."""
@@ -14,6 +16,7 @@ class Task:
         priority: str = "medium",
         completed: bool = False,
         time: str | None = None,
+        due_date: date | None = None,
     ) -> None:
         """Initialize a care task with its timing, priority, and status."""
         if not description.strip():
@@ -24,6 +27,8 @@ class Task:
             raise ValueError("Priority must be low, medium, or high.")
         self.description = description.strip()
         self.duration_minutes = duration_minutes
+        if frequency not in {"daily", "weekly", "once"}:
+            raise ValueError("Frequency must be daily, weekly, or once.")
         self.frequency = frequency
         self.priority = priority
         if time is not None:
@@ -36,10 +41,22 @@ class Task:
                 raise ValueError("Time must be in 24-hour HH:MM format.") from None
         self.completed = completed
         self.time = time
+        self.due_date = due_date if due_date is not None else date.today()
 
     def mark_complete(self) -> None:
         """Mark this care task as completed."""
         self.completed = True
+
+    def next_occurrence(self) -> Task | None:
+        """Create the next unfinished occurrence of a recurring task."""
+        days = {"daily": 1, "weekly": 7}.get(self.frequency)
+        if days is None:
+            return None
+        return Task(
+            self.description, self.duration_minutes,
+            frequency=self.frequency, priority=self.priority,
+            time=self.time, due_date=self.due_date + timedelta(days=days),
+        )
 
     def describe(self) -> str:
         """Return a readable summary of this care task."""
@@ -60,6 +77,18 @@ class Pet:
     def add_task(self, task: Task) -> None:
         """Add a care task to this pet."""
         self.tasks.append(task)
+
+    def mark_task_complete(self, task: Task) -> Task | None:
+        """Complete an owned task and append its next occurrence, if recurring."""
+        if task not in self.tasks:
+            raise ValueError("Task does not belong to this pet.")
+        if task.completed:
+            return None
+        task.mark_complete()
+        next_task = task.next_occurrence()
+        if next_task is not None:
+            self.add_task(next_task)
+        return next_task
 
 
 class Owner:
@@ -91,6 +120,12 @@ class Scheduler:
         """Connect the scheduler to an owner."""
         self.owner = owner
 
+    def mark_task_complete(self, pet: Pet, task: Task) -> Task | None:
+        """Complete a task for an owner's pet and schedule its recurrence."""
+        if pet not in self.owner.pets:
+            raise ValueError("Pet does not belong to this owner.")
+        return pet.mark_task_complete(task)
+
     def sort_by_time(self) -> list[tuple[Pet, Task]]:
         """Return all pets' tasks in start-time order, with untimed tasks last."""
         return sorted(
@@ -109,12 +144,39 @@ class Scheduler:
             and (completed is None or task.completed == completed)
         ]
 
-    def generate_schedule(self) -> list[tuple[Pet, Task]]:
+    def find_conflicts(self, on_date: date | None = None) -> list[str]:
+        """Warn about overlapping unfinished timed tasks due on a given date."""
+        day = on_date if on_date is not None else date.today()
+        timed_tasks = []
+        for pet, task in self.owner.get_all_tasks():
+            if task.completed or task.time is None or task.due_date > day:
+                continue
+            start = datetime.strptime(task.time, "%H:%M")
+            end = start + timedelta(minutes=task.duration_minutes)
+            timed_tasks.append((pet, task, start, end))
+
+        timed_tasks.sort(key=lambda item: item[2])
+        warnings = []
+        for index, (pet_a, task_a, start_a, end_a) in enumerate(timed_tasks):
+            for pet_b, task_b, start_b, end_b in timed_tasks[index + 1:]:
+                if start_b >= end_a:
+                    break
+                if start_a < end_b and start_b < end_a:
+                    warnings.append(
+                        f"WARNING: {pet_a.name}'s {task_a.description} "
+                        f"({task_a.time}, {task_a.duration_minutes} min) "
+                        f"overlaps with {pet_b.name}'s {task_b.description} "
+                        f"({task_b.time}, {task_b.duration_minutes} min)."
+                    )
+        return warnings
+
+    def generate_schedule(self, on_date: date | None = None) -> list[tuple[Pet, Task]]:
         """Select unfinished tasks from all pets within the time budget."""
+        today = on_date if on_date is not None else date.today()
         candidates = [
             (pet, task)
             for pet, task in self.owner.get_all_tasks()
-            if not task.completed
+            if not task.completed and task.due_date <= today
         ]
         candidates.sort(
             key=lambda item: (

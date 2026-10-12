@@ -42,6 +42,12 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
+## Implementation Summary
+
+PawPal+ uses four Python classes in `pawpal_system.py`. `Task` represents an activity with a description, duration, frequency, priority, and completion status. `Pet` holds a pet's details and tasks, while `Owner` manages multiple pets and combines their tasks using `get_all_tasks()`. `Scheduler` calls that owner method, skips completed tasks, sorts remaining tasks by priority and shorter duration, and selects activities that fit within the owner's available time. Its `explain_plan()` method formats the schedule for display.
+
+The `main.py` demonstration creates two pets and prints their combined daily schedule. The pytest tests verify task completion and task addition. Daily and weekly recurrence is now implemented; the Streamlit interface is a separate integration step.
+
 ## 🖥️ Sample Output
 
 Run the multi-pet scheduler demonstration:
@@ -61,7 +67,7 @@ Daily care plan for Jordan:
 - Mochi: Brush Mochi (15 min; medium priority)
 ```
 
-The owner has two pets and four candidate tasks. With 50 available minutes, the scheduler includes three tasks totaling 45 minutes and leaves out the lower-priority 25-minute playtime task. Task frequency is stored, but recurring due-date calculations are not implemented yet.
+The owner has two pets and four candidate tasks. With 50 available minutes, the scheduler includes three tasks totaling 45 minutes and leaves out the lower-priority 25-minute playtime task. Daily and weekly tasks now generate their next occurrence when completed through the pet or scheduler.
 
 ## 🧪 Testing PawPal+
 
@@ -81,14 +87,17 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ supports scheduling across multiple pets by collecting `(Pet, Task)` pairs through `Owner.get_all_tasks()`.
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Feature | Method(s) | Behavior |
+|---|---|---|
+| Sorting by time | `Scheduler.sort_by_time()` | Orders all pets' tasks by `HH:MM` start time using `sorted()` and a lambda; untimed tasks come last. |
+| Filtering | `Scheduler.filter_tasks(pet_name=None, completed=None)` | Returns tasks for a chosen pet, completion status, or both. Pet-name matching ignores case. |
+| Conflict detection | `Scheduler.find_conflicts(on_date=None)` | Checks overlapping time intervals across pets and returns warning strings. It ignores completed, untimed, and future-dated tasks and does not automatically reschedule them. |
+| Recurring tasks | `Task.next_occurrence()`, `Pet.mark_task_complete()`, `Scheduler.mark_task_complete()` | Completing a daily or weekly task through the pet/scheduler creates a new pending occurrence 1 or 7 days after the original due date. The completed task remains in history. |
+| Daily plan | `Scheduler.generate_schedule()` | Chooses pending tasks due by the selected date using priority, duration, and the owner's available-minute budget. |
+
+Sorting, filtering, conflict warnings, and daily-plan selection are separate operations. The daily plan does not automatically resolve conflicting appointment times.
 
 ## 📸 Demo Walkthrough
 

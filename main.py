@@ -1,5 +1,7 @@
 """Demonstrate sorting and filtering tasks across multiple pets."""
 
+from datetime import date
+
 from pawpal_system import Owner, Pet, Scheduler, Task
 
 
@@ -39,6 +41,28 @@ def main():
     print("\nAll completed tasks")
     print("=" * 19)
     print_tasks(scheduler.filter_tasks(completed=True))
+
+    # Two pets have tasks at the same time; the warning is non-fatal.
+    mochi.add_task(Task("Give medication", 10, time="08:00", priority="high"))
+    print("\nTask conflict warnings")
+    print("=" * 22)
+    warnings = scheduler.find_conflicts()
+    if warnings:
+        for warning in warnings:
+            print(warning)
+    else:
+        print("No scheduling conflicts found.")
+
+    print("\nRecurring tasks after completion")
+    print("=" * 32)
+    today = date.today()
+    walk = next(task for task in mochi.tasks if task.description == "Evening walk")
+    brushing = next(task for task in mochi.tasks if task.description == "Brush Mochi")
+    next_walk = scheduler.mark_task_complete(mochi, walk)
+    next_brushing = scheduler.mark_task_complete(mochi, brushing)
+    print(f"Evening walk: {today} -> {next_walk.due_date} (daily)")
+    print(f"Brush Mochi: {today} -> {next_brushing.due_date} (weekly)")
+    print(f"Mochi now has {len(mochi.tasks)} tasks, including completed history.")
 
     print("\nToday's Schedule")
     print("=" * 16)
