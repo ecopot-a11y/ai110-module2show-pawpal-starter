@@ -3,14 +3,27 @@
 ## 1. System Design
 
 **a. Initial design**
+For my initial PawPal+ system design, I chose four main classes: Owner, Pet, CareTask, and Scheduler. I wanted to keep the design simple while ensuring that the application could help pet owners organize daily care activities.
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+The Owner class stores the owner's name, available time, and list of pets. Its add_pet() method allows the owner to register pets in the system. The Pet class stores the pet's name, species, and associated care tasks. Its add_task() method allows activities such as walking, feeding, grooming, and medication to be assigned to a pet.
+
+The CareTask class represents individual pet care activities. It stores the task's title, estimated duration, and priority. Its describe() method is intended to provide information about the task.
+
+Finally, the Scheduler class is responsible for organizing tasks into a daily care plan. It stores the owner's available time and includes generate_schedule() and explain_plan() methods. These methods will eventually select appropriate tasks based on available time and priority and explain the scheduling decisions.
+
+My UML diagram shows that one owner can have multiple pets, each pet can have multiple care tasks, and the scheduler uses those tasks to create a daily plan.
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+After reviewing my initial UML diagram and the class skeletons in pawpal_system.py, I identified a few areas that might need improvement as the project develops.
+
+One potential issue is the relationship between the Pet and Scheduler classes. Although each pet maintains a list of care tasks, the scheduler needs a reliable way to access the tasks associated with the correct pet. Without this connection, it could become difficult to generate accurate schedules for owners with multiple pets.
+
+Another consideration is that the CareTask class currently stores duration and priority but does not include preferred scheduling times or recurring task information. These additional attributes could eventually help the system handle activities such as morning walks or medications that must occur at specific times.
+
+I also recognized that the Scheduler class will need to handle situations where the total duration of requested tasks exceeds the owner's available time. The scheduling logic should prioritize important activities and explain why certain tasks could not be included.
+
+For now, I decided to keep the original four-class structure rather than introduce additional classes or unnecessary complexity. I have identified these possible improvements for the implementation phase, but I have not yet changed the class skeletons. This approach allows me to develop and test the basic scheduling functionality before deciding whether the design needs further modifications.
 
 ---
 
