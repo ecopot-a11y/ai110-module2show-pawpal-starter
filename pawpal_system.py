@@ -13,7 +13,9 @@ class Task:
         frequency: str = "daily",
         priority: str = "medium",
         completed: bool = False,
+        time: str | None = None,
     ) -> None:
+        """Initialize a care task with its timing, priority, and status."""
         if not description.strip():
             raise ValueError("Task description cannot be empty.")
         if duration_minutes <= 0:
@@ -24,12 +26,23 @@ class Task:
         self.duration_minutes = duration_minutes
         self.frequency = frequency
         self.priority = priority
+        if time is not None:
+            from datetime import datetime
+            try:
+                datetime.strptime(time, "%H:%M")
+                if len(time) != 5:
+                    raise ValueError
+            except ValueError:
+                raise ValueError("Time must be in 24-hour HH:MM format.") from None
         self.completed = completed
+        self.time = time
 
     def mark_complete(self) -> None:
+        """Mark this care task as completed."""
         self.completed = True
 
     def describe(self) -> str:
+        """Return a readable summary of this care task."""
         status = "done" if self.completed else "pending"
         return (f"{self.description} ({self.duration_minutes} min, "
                 f"{self.frequency}, {self.priority}, {status})")
@@ -39,11 +52,13 @@ class Pet:
     """A pet and the tasks needed to care for it."""
 
     def __init__(self, name: str, species: str) -> None:
+        """Initialize a pet and its empty task list."""
         self.name = name
         self.species = species
         self.tasks: list[Task] = []
 
     def add_task(self, task: Task) -> None:
+        """Add a care task to this pet."""
         self.tasks.append(task)
 
 
@@ -51,6 +66,7 @@ class Owner:
     """An owner of one or more pets."""
 
     def __init__(self, name: str, available_minutes: int) -> None:
+        """Initialize an owner with a daily time budget."""
         if available_minutes < 0:
             raise ValueError("Available minutes cannot be negative.")
         self.name = name
@@ -58,6 +74,7 @@ class Owner:
         self.pets: list[Pet] = []
 
     def add_pet(self, pet: Pet) -> None:
+        """Register a pet with this owner."""
         self.pets.append(pet)
 
     def get_all_tasks(self) -> list[tuple[Pet, Task]]:
@@ -71,14 +88,29 @@ class Scheduler:
     PRIORITY_ORDER = {"high": 0, "medium": 1, "low": 2}
 
     def __init__(self, owner: Owner) -> None:
+        """Connect the scheduler to an owner."""
         self.owner = owner
 
-    def generate_schedule(self) -> list[tuple[Pet, Task]]:
-        """Schedule pending tasks by priority, then shorter duration.
+    def sort_by_time(self) -> list[tuple[Pet, Task]]:
+        """Return all pets' tasks in start-time order, with untimed tasks last."""
+        return sorted(
+            self.owner.get_all_tasks(),
+            key=lambda item: item[1].time if item[1].time is not None else "99:99",
+        )
 
-        Frequency is recorded on tasks, but this first version assumes tasks
-        passed in are due today; it does not calculate recurrence dates.
-        """
+    def filter_tasks(
+        self, pet_name: str | None = None, completed: bool | None = None
+    ) -> list[tuple[Pet, Task]]:
+        """Return tasks matching the requested pet and completion status."""
+        return [
+            (pet, task)
+            for pet, task in self.owner.get_all_tasks()
+            if (pet_name is None or pet.name.casefold() == pet_name.casefold())
+            and (completed is None or task.completed == completed)
+        ]
+
+    def generate_schedule(self) -> list[tuple[Pet, Task]]:
+        """Select unfinished tasks from all pets within the time budget."""
         candidates = [
             (pet, task)
             for pet, task in self.owner.get_all_tasks()
@@ -99,6 +131,7 @@ class Scheduler:
         return plan
 
     def explain_plan(self, plan: list[tuple[Pet, Task]]) -> str:
+        """Format the selected tasks as a readable daily plan."""
         if not plan:
             return "No pending tasks fit in the available time."
         lines = [f"Daily care plan for {self.owner.name}:"]
