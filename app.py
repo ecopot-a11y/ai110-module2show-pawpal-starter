@@ -1,6 +1,14 @@
 import streamlit as st
+from pawpal_system import Owner, Pet, Task, Scheduler
 
 st.set_page_config(page_title="PawPal+", page_icon="🐾", layout="centered")
+
+# Create the owner only once per browser session.
+if "owner" not in st.session_state:
+    st.session_state.owner = Owner(
+        name="Pet Owner",
+        available_minutes=60
+    )
 
 st.title("🐾 PawPal+")
 
@@ -38,10 +46,38 @@ At minimum, your system should:
 
 st.divider()
 
-st.subheader("Quick Demo Inputs (UI only)")
-owner_name = st.text_input("Owner name", value="Jordan")
-pet_name = st.text_input("Pet name", value="Mochi")
-species = st.selectbox("Species", ["dog", "cat", "other"])
+st.subheader("Pet Management")
+
+owner = st.session_state.owner
+
+# Update the owner's name.
+owner.name = st.text_input("Owner name", value=owner.name)
+
+# Form for adding pets.
+with st.form("add_pet_form", clear_on_submit=True):
+    pet_name = st.text_input("Pet name")
+    species = st.selectbox("Species", ["dog", "cat", "other"])
+
+    submitted = st.form_submit_button("Add Pet")
+
+if submitted:
+    if pet_name.strip():
+        new_pet = Pet(pet_name.strip(), species)
+        owner.add_pet(new_pet)
+        st.success(f"{pet_name} added successfully!")
+    else:
+        st.error("Please enter a pet name.")
+
+# Display pets saved in session state.
+st.subheader("My Pets")
+
+owner = st.session_state.owner
+
+if owner.pets:
+    for pet in owner.pets:
+        st.write(f"🐾 {pet.name} ({pet.species})")
+else:
+    st.info("No pets added yet.")
 
 st.markdown("### Tasks")
 st.caption("Add a few tasks. In your final version, these should feed into your scheduler.")
