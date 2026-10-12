@@ -44,15 +44,24 @@ pip install -r requirements.txt
 
 ## 🖥️ Sample Output
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
+Run the multi-pet scheduler demonstration:
 
+```powershell
+python main.py
 ```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
+
+Verified terminal output:
+
+```text
+Today's Schedule
+================
+Daily care plan for Jordan:
+- Luna: Feed Luna (10 min; high priority)
+- Mochi: Morning walk (20 min; high priority)
+- Mochi: Brush Mochi (15 min; medium priority)
 ```
+
+The owner has two pets and four candidate tasks. With 50 available minutes, the scheduler includes three tasks totaling 45 minutes and leaves out the lower-priority 25-minute playtime task. Task frequency is stored, but recurring due-date calculations are not implemented yet.
 
 ## 🧪 Testing PawPal+
 
