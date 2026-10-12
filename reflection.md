@@ -59,8 +59,7 @@ For now, I decided to keep the original four-class structure rather than introdu
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+I used pytest to create two automated tests for my PawPal+ application. The first test verified that calling `mark_complete()` changes a task's completion status from False to True. The second test verified that adding a task to a pet increases the number of tasks associated with that pet. Both tests passed successfully using Python 3.13.7 and pytest 9.1.1, with a total execution time of 0.18 seconds. These results confirmed that the basic task management functionality was working as expected.
 
 **b. Confidence**
 
