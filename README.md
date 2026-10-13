@@ -69,21 +69,44 @@ Daily care plan for Jordan:
 
 The owner has two pets and four candidate tasks. With 50 available minutes, the scheduler includes three tasks totaling 45 minutes and leaves out the lower-priority 25-minute playtime task. Daily and weekly tasks now generate their next occurrence when completed through the pet or scheduler.
 
-## 🧪 Testing PawPal+
+## Testing PawPal+
 
-```bash
-# Run the full test suite:
-pytest
+Run the full automated test suite from the project root:
 
-# Run with coverage:
-pytest --cov
+```powershell
+python -m pytest
 ```
 
-Sample test output:
+The nine tests cover task completion and addition (2), chronological sorting (1), daily and weekly recurrence plus one-time tasks (3), and conflict detection for same-time, overlapping, and non-conflicting tasks (3).
 
+### Successful test run
+
+The following is the actual output from the successful `python -m pytest -v` run (the verbose form of the command above):
+
+```text
+========================= test session starts ==========================
+platform win32 -- Python 3.13.7, pytest-9.1.1, pluggy-1.6.0 -- C:\Users\COD\Documents\AI110\ai110-module2show-pawpal-starter\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\COD\Documents\AI110\ai110-module2show-pawpal-starter
+plugins: anyio-4.15.1
+collected 9 items
+
+test_conflicts.py::test_same_time_different_pets_warns PASSED     [ 11%]
+test_conflicts.py::test_partial_overlap_same_pet_warns PASSED     [ 22%]
+test_conflicts.py::test_adjacent_completed_future_and_untimed_tasks_do_not_conflict PASSED [ 33%]
+test_recurrence.py::test_daily_recurrence PASSED                  [ 44%]
+test_recurrence.py::test_weekly_recurrence PASSED                 [ 55%]
+test_recurrence.py::test_one_time_task_does_not_recur PASSED      [ 66%]
+tests/test_pawpal.py::test_task_completion PASSED                 [ 77%]
+tests/test_pawpal.py::test_task_addition PASSED                   [ 88%]
+tests/test_pawpal.py::test_sorting_correctness PASSED             [100%]
+
+========================== 9 passed in 0.32s ===========================
 ```
-# Paste your pytest output here
-```
+
+### Confidence level: ★★★★☆ (4/5 stars)
+
+All nine automated tests passed, giving me confidence in task management, sorting, recurrence, and conflict detection. I am not assigning five stars because overnight scheduling edge cases and end-to-end Streamlit behavior have not yet been fully tested.
 
 ## 📐 Smarter Scheduling
 

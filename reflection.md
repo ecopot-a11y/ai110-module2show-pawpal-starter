@@ -36,9 +36,15 @@ For now, I decided to keep the original four-class structure rather than introdu
 
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+**b. Tradeoffs**
 
+One tradeoff my PawPal+ scheduler makes is detecting scheduling conflicts without automatically resolving them. The `find_conflicts()` method checks whether tasks overlap based on their scheduled start times and durations, including tasks belonging to different pets. When it finds an overlap, it generates a warning rather than automatically moving or removing a task.
+
+I chose this approach because some pet care activities, such as feeding or medication, may need to happen at specific times. Automatically rescheduling these activities could create additional problems. Allowing the owner to review the warnings provides flexibility while keeping the scheduling algorithm relatively simple.
+
+I also asked AI how the conflict detection algorithm could be simplified for readability or performance. One suggestion was to use `itertools.combinations()` to compare task pairs. Although this could make parts of the code shorter, it would remove the early-exit optimization in my existing sorted-loop approach. I decided to keep the current implementation because it is easier for me to follow and avoids unnecessary comparisons.
+
+This experience helped me understand that shorter code is not always better code. Readability, performance, and the needs of the user should all be considered when evaluating AI-generated suggestions.
 ---
 
 ## 3. AI Collaboration
