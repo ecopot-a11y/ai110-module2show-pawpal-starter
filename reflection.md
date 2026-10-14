@@ -3,27 +3,12 @@
 ## 1. System Design
 
 **a. Initial design**
-For my initial PawPal+ system design, I chose four main classes: Owner, Pet, CareTask, and Scheduler. I wanted to keep the design simple while ensuring that the application could help pet owners organize daily care activities.
 
-The Owner class stores the owner's name, available time, and list of pets. Its add_pet() method allows the owner to register pets in the system. The Pet class stores the pet's name, species, and associated care tasks. Its add_task() method allows activities such as walking, feeding, grooming, and medication to be assigned to a pet.
-
-The CareTask class represents individual pet care activities. It stores the task's title, estimated duration, and priority. Its describe() method is intended to provide information about the task.
-
-Finally, the Scheduler class is responsible for organizing tasks into a daily care plan. It stores the owner's available time and includes generate_schedule() and explain_plan() methods. These methods will eventually select appropriate tasks based on available time and priority and explain the scheduling decisions.
-
-My UML diagram shows that one owner can have multiple pets, each pet can have multiple care tasks, and the scheduler uses those tasks to create a daily plan.
+My initial UML design included four classes: `Owner`, `Pet`, `CareTask`, and `Scheduler`. The owner stored basic information and available care time, each pet held its own care tasks, and each task described an activity with a duration and priority. The scheduler was responsible for selecting tasks that fit the owner's time budget and explaining the resulting daily plan. This separation gave me a starting point for organizing the application.
 
 **b. Design changes**
 
-After reviewing my initial UML diagram and the class skeletons in pawpal_system.py, I identified a few areas that might need improvement as the project develops.
-
-One potential issue is the relationship between the Pet and Scheduler classes. Although each pet maintains a list of care tasks, the scheduler needs a reliable way to access the tasks associated with the correct pet. Without this connection, it could become difficult to generate accurate schedules for owners with multiple pets.
-
-Another consideration is that the CareTask class currently stores duration and priority but does not include preferred scheduling times or recurring task information. These additional attributes could eventually help the system handle activities such as morning walks or medications that must occur at specific times.
-
-I also recognized that the Scheduler class will need to handle situations where the total duration of requested tasks exceeds the owner's available time. The scheduling logic should prioritize important activities and explain why certain tasks could not be included.
-
-For now, I decided to keep the original four-class structure rather than introduce additional classes or unnecessary complexity. I have identified these possible improvements for the implementation phase, but I have not yet changed the class skeletons. This approach allows me to develop and test the basic scheduling functionality before deciding whether the design needs further modifications.
+During implementation, `CareTask` became `Task` and gained a start time, due date, frequency, and completion status. I changed `Scheduler` to receive an `Owner` object and retrieve `(Pet, Task)` pairs through `Owner.get_all_tasks()`, allowing it to plan care for multiple pets. I also added sorting, filtering, overlapping-time conflict detection, and recurring-task methods. I revised the Mermaid UML diagram to reflect the final classes and their relationships.
 
 ---
 
@@ -31,31 +16,23 @@ For now, I decided to keep the original four-class structure rather than introdu
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The daily scheduler considers whether a task is unfinished and due, its priority, its duration, and the owner's available minutes. It sorts eligible tasks by priority (high before medium before low), then by shorter duration within the same priority level, and selects tasks that fit the remaining budget. Separate methods sort tasks chronologically, filter them by pet or completion status, and identify overlapping timed activities. I prioritized completion status, due dates, and the owner's time limit so that the plan would be manageable rather than simply listing every task.
 
 **b. Tradeoffs**
 
-One tradeoff my PawPal+ scheduler makes is detecting scheduling conflicts without automatically resolving them. The `find_conflicts()` method checks whether tasks overlap based on their scheduled start times and durations, including tasks belonging to different pets. When it finds an overlap, it generates a warning rather than automatically moving or removing a task.
+One tradeoff is that `Scheduler.find_conflicts()` warns about overlapping activities but does not automatically reschedule them. For example, a walk that starts at 8:00 AM and lasts 20 minutes conflicts with a feeding scheduled for 8:10 AM. The app displays a warning and leaves the decision to the owner. I chose this approach because some care activities, particularly medication and feeding, may have important timing requirements that an automatic change could overlook. It keeps the logic simpler and the owner in control. The priority-based daily planner also does not guarantee a conflict-free timetable; the conflict warnings are a separate check.
 
-I chose this approach because some pet care activities, such as feeding or medication, may need to happen at specific times. Automatically rescheduling these activities could create additional problems. Allowing the owner to review the warnings provides flexibility while keeping the scheduling algorithm relatively simple.
-
-I also asked AI how the conflict detection algorithm could be simplified for readability or performance. One suggestion was to use `itertools.combinations()` to compare task pairs. Although this could make parts of the code shorter, it would remove the early-exit optimization in my existing sorted-loop approach. I decided to keep the current implementation because it is easier for me to follow and avoids unnecessary comparisons.
-
-This experience helped me understand that shorter code is not always better code. Readability, performance, and the needs of the user should all be considered when evaluating AI-generated suggestions.
 ---
 
 ## 3. AI Collaboration
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used ChatGPT as a coding assistant for UML planning, drafting Python classes, building scheduler methods, adding docstrings, writing pytest tests, troubleshooting errors, and connecting the backend to Streamlit. The most useful features were generating small, targeted code changes, explaining how methods interact, and interpreting terminal output. Specific prompts such as “How could this algorithm be simplified for better readability or performance?” helped me evaluate the code instead of accepting it automatically. Keeping separate chat sessions or focused conversations for design, algorithms, testing, and UI work helped me keep each phase's requirements and decisions organized, although I still had to check that later changes matched the actual project files.
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+When reviewing the conflict detection algorithm, AI suggested that `itertools.combinations()` could shorten the code used to compare pairs of tasks. I chose to keep the existing sorted nested loops because they are easier for me to follow and can stop checking once later tasks start after the current task ends. I also learned to distinguish application bugs from setup problems: pytest initially reported an import-file mismatch because duplicate `test_pawpal.py` files existed in different folders. Removing the duplicate resolved the collection error without changing the scheduler logic. I verified the system through the CLI demonstration and automated tests rather than assuming that generated code was correct.
 
 ---
 
@@ -63,12 +40,11 @@ This experience helped me understand that shorter code is not always better code
 
 **a. What you tested**
 
-I used pytest to create two automated tests for my PawPal+ application. The first test verified that calling `mark_complete()` changes a task's completion status from False to True. The second test verified that adding a task to a pet increases the number of tasks associated with that pet. Both tests passed successfully using Python 3.13.7 and pytest 9.1.1, with a total execution time of 0.18 seconds. These results confirmed that the basic task management functionality was working as expected.
+I used `python -m pytest -v` to test basic task completion and addition, chronological sorting, daily and weekly recurrence, one-time tasks that should not recur, and several conflict-detection cases. The conflict tests covered tasks beginning at the same time, partially overlapping tasks, and situations that should not generate warnings, such as adjacent, completed, future-dated, or untimed tasks. These tests matter because they check both expected behavior and conditions that could produce confusing or incorrect schedules. My final shared terminal run reported **9 passed in 0.32 seconds**, with no failures or errors.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+My confidence level is **★★★★☆ (4 out of 5 stars)**. All nine automated tests passed, which gives me confidence in the main scheduling algorithms. I would not give five stars yet because I have not completed automated end-to-end tests of the Streamlit interface, and I would like to test more complex cases such as tasks that extend past midnight, a large number of overlapping activities, and how overdue recurring tasks should appear in a selected day's plan.
 
 ---
 
@@ -76,12 +52,12 @@ I used pytest to create two automated tests for my PawPal+ application. The firs
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I am most satisfied with turning a basic pet-task project into a multi-pet scheduling system with visible, useful features. The owner can add pets and tasks, choose start times and recurrence, view sorted or filtered tasks, and see conflict warnings in the Streamlit interface. The backend and UI now share the same `Owner`, `Pet`, `Task`, and `Scheduler` design, which makes the system easier to understand and maintain.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+In another iteration, I would add an option to edit existing tasks directly in the UI, improve handling of overnight and overdue activities, and consider suggesting alternative times for conflicts without changing them automatically. I would also add more automated tests for the Streamlit workflow and save task data so it persists beyond the current browser session. These improvements would make the application more practical while keeping the scheduling rules understandable.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+My biggest lesson is that being the **lead architect** means I remain responsible for the system's design and behavior, even when AI can produce code quickly. AI was valuable for suggesting implementations, explaining errors, and accelerating documentation, but I still needed to decide which features belonged in the project, choose between alternative algorithms, and verify results. Good collaboration with AI means asking specific questions, checking the output against the requirements, and making deliberate design decisions rather than accepting every suggestion as-is.
