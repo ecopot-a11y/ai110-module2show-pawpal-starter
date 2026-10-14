@@ -1,0 +1,48 @@
+classDiagram
+    direction LR
+
+    class Task {
+        +str description
+        +int duration_minutes
+        +str frequency
+        +str priority
+        +bool completed
+        +str time
+        +date due_date
+        +mark_complete() None
+        +next_occurrence() Task
+        +describe() str
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +list tasks
+        +add_task(task) None
+        +mark_task_complete(task) Task
+    }
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +list pets
+        +add_pet(pet) None
+        +get_all_tasks() list
+    }
+
+    class Scheduler {
+        +Owner owner
+        +dict PRIORITY_ORDER
+        +mark_task_complete(pet, task) Task
+        +sort_by_time() list
+        +filter_tasks(pet_name, completed) list
+        +find_conflicts(on_date) list
+        +generate_schedule(on_date) list
+        +explain_plan(plan) str
+    }
+
+    Owner "1" *-- "0..*" Pet : owns
+    Pet "1" *-- "0..*" Task : has care tasks
+    Scheduler --> "1" Owner : plans for
+    Scheduler ..> Task : examines and schedules
+    Task ..> Task : creates next occurrence

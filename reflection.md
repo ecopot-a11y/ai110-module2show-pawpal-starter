@@ -36,8 +36,6 @@ For now, I decided to keep the original four-class structure rather than introdu
 
 **b. Tradeoffs**
 
-**b. Tradeoffs**
-
 One tradeoff my PawPal+ scheduler makes is detecting scheduling conflicts without automatically resolving them. The `find_conflicts()` method checks whether tasks overlap based on their scheduled start times and durations, including tasks belonging to different pets. When it finds an overlap, it generates a warning rather than automatically moving or removing a task.
 
 I chose this approach because some pet care activities, such as feeding or medication, may need to happen at specific times. Automatically rescheduling these activities could create additional problems. Allowing the owner to review the warnings provides flexibility while keeping the scheduling algorithm relatively simple.
