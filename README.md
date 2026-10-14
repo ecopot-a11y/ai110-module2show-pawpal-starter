@@ -46,28 +46,7 @@ pip install -r requirements.txt
 
 PawPal+ uses four Python classes in `pawpal_system.py`. `Task` represents an activity with a description, duration, frequency, priority, and completion status. `Pet` holds a pet's details and tasks, while `Owner` manages multiple pets and combines their tasks using `get_all_tasks()`. `Scheduler` calls that owner method, skips completed tasks, sorts remaining tasks by priority and shorter duration, and selects activities that fit within the owner's available time. Its `explain_plan()` method formats the schedule for display.
 
-The `main.py` demonstration creates two pets and prints their combined daily schedule. The pytest tests verify task completion and task addition. Daily and weekly recurrence is now implemented; the Streamlit interface is a separate integration step.
-
-## 🖥️ Sample Output
-
-Run the multi-pet scheduler demonstration:
-
-```powershell
-python main.py
-```
-
-Verified terminal output:
-
-```text
-Today's Schedule
-================
-Daily care plan for Jordan:
-- Luna: Feed Luna (10 min; high priority)
-- Mochi: Morning walk (20 min; high priority)
-- Mochi: Brush Mochi (15 min; medium priority)
-```
-
-The owner has two pets and four candidate tasks. With 50 available minutes, the scheduler includes three tasks totaling 45 minutes and leaves out the lower-priority 25-minute playtime task. Daily and weekly tasks now generate their next occurrence when completed through the pet or scheduler.
+The `main.py` demonstration exercises sorting, filtering, conflict detection, recurring tasks, and a multi-pet daily schedule. The Streamlit interface in `app.py` connects the backend to pet/task entry, task completion, warnings, and schedule display.
 
 ## Testing PawPal+
 
@@ -108,6 +87,15 @@ tests/test_pawpal.py::test_sorting_correctness PASSED             [100%]
 
 All nine automated tests passed, giving me confidence in task management, sorting, recurrence, and conflict detection. I am not assigning five stars because overnight scheduling edge cases and end-to-end Streamlit behavior have not yet been fully tested.
 
+## Features
+
+- **Multi-pet care management:** `Owner.add_pet()` and `Pet.add_task()` keep each pet's activities organized, while `Owner.get_all_tasks()` gathers them for scheduling.
+- **Chronological sorting:** `Scheduler.sort_by_time()` orders tasks by their `HH:MM` start time and places tasks without a start time last.
+- **Task filtering:** `Scheduler.filter_tasks()` filters by pet name, completion status, or both.
+- **Conflict warnings:** `Scheduler.find_conflicts()` detects overlapping start-time and duration intervals, including tasks for different pets, and warns without automatically changing the schedule.
+- **Recurring tasks:** `Task.next_occurrence()` and `Scheduler.mark_task_complete()` create the next pending daily or weekly task when an occurrence is completed. One-time tasks do not recur.
+- **Time-budgeted daily plans:** `Scheduler.generate_schedule()` selects pending tasks due by the chosen date, prioritizing higher-priority and shorter tasks within the owner's available minutes. `Scheduler.explain_plan()` describes the result.
+
 ## 📐 Smarter Scheduling
 
 PawPal+ supports scheduling across multiple pets by collecting `(Pet, Task)` pairs through `Owner.get_all_tasks()`.
@@ -122,14 +110,66 @@ PawPal+ supports scheduling across multiple pets by collecting `(Pet, Task)` pai
 
 Sorting, filtering, conflict warnings, and daily-plan selection are separate operations. The daily plan does not automatically resolve conflicting appointment times.
 
-## 📸 Demo Walkthrough
+## Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+### Start the app
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+From the project root, install the dependencies if needed, then launch the interactive UI:
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+```powershell
+python -m streamlit run app.py
+```
+
+1. **Set owner preferences:** In the sidebar, enter the owner's name and daily minutes available for pet care.
+2. **Add pets:** Use **Add a pet** to register Mochi (dog) and Luna (cat). Both pets can have independent care tasks.
+3. **Schedule care tasks:** Under **Add a care task**, choose a pet, enter an activity such as *Morning walk*, select its duration and priority, choose a daily/weekly/one-time frequency, set its first due date, and optionally set a specific start time (for example, 08:00).
+4. **Review and filter:** The **Sorted and filtered tasks** table lists tasks in chronological order. Filter by pet or by pending/completed status.
+5. **Complete recurring tasks:** Select a pending task and choose **Mark complete**. Daily and weekly activities create a new occurrence for the following day or week, while the completed occurrence remains in the history.
+6. **Inspect conflicts:** For example, add Mochi's 20-minute walk at 08:00 and Luna's 10-minute feeding at 08:10, both due today. The app displays a warning identifying the overlapping activities. The owner decides whether to change them; PawPal+ does not automatically reschedule tasks.
+7. **Generate a daily plan:** Choose a plan date and click **Generate daily plan**. The app shows tasks that fit the available time budget, chosen by priority and duration. Conflict warnings are separate from the plan selection.
+
+### Command-line demonstration
+
+You can also run the backend demonstration without Streamlit:
+
+```powershell
+python main.py
+```
+
+Example output from the current `main.py` (dates depend on when the script is run):
+
+```text
+All tasks sorted by time
+========================
+08:00 | Luna: Feed Luna (pending)
+10:00 | Luna: Playtime (complete)
+14:30 | Mochi: Brush Mochi (pending)
+18:00 | Mochi: Evening walk (pending)
+
+Mochi's pending tasks
+=====================
+18:00 | Mochi: Evening walk (pending)
+14:30 | Mochi: Brush Mochi (pending)
+
+All completed tasks
+===================
+10:00 | Luna: Playtime (complete)
+
+Task conflict warnings
+======================
+WARNING: Mochi's Give medication (08:00, 10 min) overlaps with Luna's Feed Luna (08:00, 10 min).
+
+Recurring tasks after completion
+================================
+Evening walk: 2026-10-14 -> 2026-10-15 (daily)
+Brush Mochi: 2026-10-14 -> 2026-10-21 (weekly)
+Mochi now has 5 tasks, including completed history.
+
+Today's Schedule
+================
+Daily care plan for Jordan:
+- Mochi: Give medication (10 min; high priority)
+- Luna: Feed Luna (10 min; high priority)
+```
+
+**What this demonstrates:** Sorting returns tasks chronologically, but filtering preserves the original task order rather than sorting it automatically. Conflict warnings identify overlapping activities. Completing recurring tasks schedules future occurrences, which are not selected for today's plan. The final plan selects tasks according to priority, duration, and the owner's 50-minute budget; it does not automatically avoid conflicts.
