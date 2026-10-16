@@ -170,6 +170,47 @@ class Scheduler:
                     )
         return warnings
 
+    def next_available_slot(
+        self, duration_minutes: int, on_date: date | None = None,
+        workday_start: str = "08:00", workday_end: str = "20:00",
+    ) -> str | None:
+        """Find the earliest free start time within a daily scheduling window.
+
+        Existing incomplete, timed tasks due by on_date block their full durations.
+        Untimed and completed tasks do not block slots. Returns HH:MM or None.
+        """
+        if duration_minutes <= 0:
+            raise ValueError("Duration must be greater than zero.")
+        day = on_date if on_date is not None else date.today()
+        try:
+            start = datetime.strptime(workday_start, "%H:%M")
+            end = datetime.strptime(workday_end, "%H:%M")
+        except ValueError:
+            raise ValueError("Window times must use HH:MM format.") from None
+        if end <= start:
+            raise ValueError("Window end must be later than window start.")
+
+        busy = []
+        for _, task in self.owner.get_all_tasks():
+            if task.completed or task.time is None or task.due_date > day:
+                continue
+            task_start = datetime.strptime(task.time, "%H:%M")
+            task_end = task_start + timedelta(minutes=task.duration_minutes)
+            if task_end > start and task_start < end:
+                busy.append((task_start, task_end))
+        busy.sort(key=lambda interval: interval[0])
+
+        candidate = start
+        needed = timedelta(minutes=duration_minutes)
+        for task_start, task_end in busy:
+            if candidate + needed <= task_start:
+                return candidate.strftime("%H:%M")
+            if task_end > candidate:
+                candidate = task_end
+            if candidate + needed > end:
+                return None
+        return candidate.strftime("%H:%M") if candidate + needed <= end else None
+
     def generate_schedule(self, on_date: date | None = None) -> list[tuple[Pet, Task]]:
         """Select unfinished tasks from all pets within the time budget."""
         today = on_date if on_date is not None else date.today()
