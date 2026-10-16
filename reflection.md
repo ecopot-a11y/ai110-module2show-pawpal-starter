@@ -28,7 +28,7 @@ One tradeoff is that `Scheduler.find_conflicts()` warns about overlapping activi
 
 **a. How you used AI**
 
-I used ChatGPT as a coding assistant for UML planning, drafting Python classes, building scheduler methods, adding docstrings, writing pytest tests, troubleshooting errors, and connecting the backend to Streamlit. The most useful features were generating small, targeted code changes, explaining how methods interact, and interpreting terminal output. Specific prompts such as “How could this algorithm be simplified for better readability or performance?” helped me evaluate the code instead of accepting it automatically. Keeping separate chat sessions or focused conversations for design, algorithms, testing, and UI work helped me keep each phase's requirements and decisions organized, although I still had to check that later changes matched the actual project files.
+I used Claude as a coding assistant for UML planning, drafting Python classes, building scheduler methods, adding docstrings, writing pytest tests, troubleshooting errors, and connecting the backend to Streamlit. The most useful features were generating small, targeted code changes, explaining how methods interact, and interpreting terminal output. Specific prompts such as “How could this algorithm be simplified for better readability or performance?” helped me evaluate the code instead of accepting it automatically. Keeping separate chat sessions or focused conversations for design, algorithms, testing, and UI work helped me keep each phase's requirements and decisions organized, although I still had to check that later changes matched the actual project files.
 
 **b. Judgment and verification**
 

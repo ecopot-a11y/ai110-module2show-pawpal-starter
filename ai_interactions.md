@@ -10,7 +10,7 @@
 
 **What task did you give the agent?**
 
-I asked ChatGPT to add a third, optional scheduling algorithm to PawPal+: find the earliest free start time for a task of a specified duration within a configurable daily window. I asked it to preserve existing sorting, filtering, conflict detection, recurrence, and scheduling behavior, and to add automated tests.
+I asked Claude to add a third, optional scheduling algorithm to PawPal+: find the earliest free start time for a task of a specified duration within a configurable daily window. I asked it to preserve existing sorting, filtering, conflict detection, recurrence, and scheduling behavior, and to add automated tests.
 
 **What did the agent do?**
 
